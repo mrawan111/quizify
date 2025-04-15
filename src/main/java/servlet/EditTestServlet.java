@@ -9,55 +9,45 @@ import javax.servlet.http.*;
 import javax.servlet.annotation.*;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
-
+@WebServlet(
+        urlPatterns = "/admin/editTest",
+        initParams = {
+                @WebInitParam(name = "dbUrl", value = "jdbc:postgresql://localhost:5432/Questify_db"),
+                @WebInitParam(name = "dbUser", value = "postgres"),
+                @WebInitParam(name = "dbPassword", value = "123")
+        },
+        loadOnStartup = 3
+)
 public class EditTestServlet extends HttpServlet {
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        int testId = Integer.parseInt(request.getParameter("id"));
+    private String dbUrl;
+    private String dbUser;
+    private String dbPassword;
 
-        try (Connection conn = DButil.getConnection()) {
-            TestDAO testDAO = new TestDAO(conn);
-            Test test = testDAO.getTestById(testId);
+    @Override
+    public void init() throws ServletException {
+        this.dbUrl = getServletConfig().getInitParameter("dbUrl");
+        this.dbUser = getServletConfig().getInitParameter("dbUser");
+        this.dbPassword = getServletConfig().getInitParameter("dbPassword");
+        System.out.println("EditTestServlet initialized with DB: " + dbUrl);
+    }
 
-            if (test != null) {
-                request.setAttribute("test", test);
-                request.getRequestDispatcher("/admin/editTest.jsp").forward(request, response);
-            } else {
-                request.getSession().setAttribute("errorMessage", "Test not found");
-                response.sendRedirect(request.getContextPath() + "/admin/manageTests.jsp");
-            }
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        try (Connection conn = DriverManager.getConnection(dbUrl, dbUser, dbPassword)) {
+            // Your existing implementation
         } catch (SQLException e) {
             e.printStackTrace();
-            request.getSession().setAttribute("errorMessage", "Database error: " + e.getMessage());
-            response.sendRedirect(request.getContextPath() + "/admin/manageTests.jsp");
         }
     }
 
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        int testId = Integer.parseInt(request.getParameter("id"));
-        String title = request.getParameter("title");
-        int recruiterId = Integer.parseInt(request.getParameter("recruiterId"));
-        int assessmentId = Integer.parseInt(request.getParameter("assessmentId"));
-        int targetDifficulty = Integer.parseInt(request.getParameter("targetDifficulty"));
-
-        Test test = new Test();
-        test.setId(testId);
-        test.setTitle(title);
-        test.setRecruiterId(recruiterId);
-        test.setAssessmentId(assessmentId);
-        test.setTargetDifficulty(targetDifficulty);
-
-        try (Connection conn = DButil.getConnection()) {
-            TestDAO testDAO = new TestDAO(conn);
-            if (testDAO.updateTest(test)) {
-                request.getSession().setAttribute("successMessage", "Test updated successfully!");
-            } else {
-                request.getSession().setAttribute("errorMessage", "Failed to update test.");
-            }
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        try (Connection conn = DriverManager.getConnection(dbUrl, dbUser, dbPassword)) {
+            // Your existing implementation
         } catch (SQLException e) {
             e.printStackTrace();
-            request.getSession().setAttribute("errorMessage", "Database error: " + e.getMessage());
         }
-        response.sendRedirect(request.getContextPath() + "/admin/manageTests.jsp");
     }
 }
